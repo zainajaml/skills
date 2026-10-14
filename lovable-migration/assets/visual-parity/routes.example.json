@@ -1,0 +1,8 @@
+[
+  { "path": "/" },
+  { "path": "/about" },
+  { "path": "/contact", "mask": ["iframe[src*='google.com/maps']"] },
+  { "path": "/blog/first-post", "name": "blog_post" },
+  { "path": "/does-not-exist", "name": "not_found" },
+  { "path": "/", "name": "home_mobile_menu_open", "fullPage": false, "projects": ["mobile"], "actions": [{ "click": "button[aria-label*='menu' i]" }] }
+]

@@ -1,0 +1,84 @@
+{
+  "project": {
+    "name": "",
+    "source": "relative/path/to/original (unchanged)",
+    "target": "relative/path/to/migrated",
+    "date": "YYYY-MM-DD"
+  },
+  "classification": "frontend-only | frontend-with-external-calls | backend-dependent (frontend-only strategy agreed)",
+  "summary": "Two to four sentences: what the site is, what was migrated, the target stack, and whether it is ready to deploy.",
+  "configuration": {
+    "Framework": "",
+    "Language": "",
+    "Styling": "",
+    "UI library": "",
+    "Icons": "",
+    "Package manager": "",
+    "Output directory": "",
+    "Rendering / deployment target": ""
+  },
+  "architecture": {
+    "before": "src/\n  pages/ (3 files, largest 480 lines)\n  components/ (Navbar + 48 ui primitives, 31 unused)\n  App.tsx",
+    "after": "src/\n  app/\n  features/\n  components/\n  data/",
+    "notes": ""
+  },
+  "pages": [
+    { "route": "/", "source": "src/pages/Index.tsx", "target": "src/features/home/pages/HomePage.tsx", "status": "migrated", "notes": "" }
+  ],
+  "components": [
+    { "name": "HeroSection", "path": "src/features/home/components/HeroSection.tsx", "purpose": "Home hero with CTA", "usedBy": ["HomePage"] }
+  ],
+  "dataFiles": [
+    { "path": "src/data/services.ts", "contents": "3 service cards" }
+  ],
+  "dependencies": {
+    "added": [{ "name": "", "reason": "" }],
+    "removed": [{ "name": "lovable-tagger", "reason": "Lovable editor tooling, not used at runtime" }],
+    "replaced": [{ "from": "", "to": "", "reason": "" }]
+  },
+  "removedFiles": [
+    { "path": "src/components/ui/card.tsx", "reason": "not imported anywhere (analyzer + search)" }
+  ],
+  "checks": [
+    { "name": "Install from lockfile", "command": "npm ci", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Type check", "command": "npm run typecheck", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Lint", "command": "npm run lint", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Production build", "command": "npm run build", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Tests", "command": "npm test", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Routes and deep links", "command": "parity run (HTTP status per route)", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Interactions", "command": "interaction checklist / tests", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Accessibility", "command": "axe or Lighthouse accessibility", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "SEO tags", "command": "parity run (title, description, headings) + head review", "result": "NOT_RUN", "evidence": "", "required": true },
+    { "name": "Asset references", "command": "build output + parity run (no failed requests)", "result": "NOT_RUN", "evidence": "", "required": true }
+  ],
+  "visualParity": {
+    "ran": false,
+    "reasonNotRun": "",
+    "viewports": ["mobile 375", "tablet 768", "desktop 1440"],
+    "maxDiffRatio": 0.01,
+    "captures": 0,
+    "passed": 0,
+    "differences": [
+      { "route": "", "viewport": "", "diff": "", "explanation": "", "approvedByUser": false }
+    ]
+  },
+  "intentionalDifferences": [
+    { "what": "", "why": "", "approvedByUser": false }
+  ],
+  "externalServices": [
+    { "what": "Contact form posts to Formspree", "where": "src/features/home/components/ContactSection.tsx", "handling": "kept unchanged; endpoint ID in config" }
+  ],
+  "commands": {
+    "install": "npm ci",
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "preview": "npm run preview",
+    "test": "npm test",
+    "lint": "npm run lint"
+  },
+  "deployment": [
+    "Static output in dist/; configure SPA fallback to index.html for deep links"
+  ],
+  "limitations": [],
+  "followUps": []
+}

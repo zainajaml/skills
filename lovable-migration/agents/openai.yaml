@@ -1,0 +1,9 @@
+interface:
+  display_name: Lovable Frontend Migration
+  short_description: Rebuild a frontend-only Lovable app as a clean React, Next.js, Vue or Angular project
+  default_prompt: Use $lovable-migration to analyze this Lovable frontend, ask me for the target
+    framework and styling, and rebuild it as a modular project that looks and behaves the same.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  allow_implicit_invocation: true

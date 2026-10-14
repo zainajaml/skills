@@ -1,11 +1,14 @@
 # Skills for moving off Lovable + Supabase
 
-Agent Skills that help an AI coding agent (Claude Code, Cursor, Codex and other Agent Skills hosts) take an app built with Lovable and Supabase and turn it into separate, professionally structured frontend and backend repositories. They also keep those repositories up to date while development continues in Lovable.
+Agent Skills that help an AI coding agent (Claude Code, Cursor, Codex and other Agent Skills hosts) turn apps built with Lovable into professionally structured projects:
+- a frontend-only Lovable site becomes a clean React, Next.js, Vue or Angular project;
+- a Lovable + Supabase app becomes separate frontend and backend repositories, which are kept up to date while development continues in Lovable.
 
 | Skill | Use it to |
 | --- | --- |
 | [lovable-supabase-migration](lovable-supabase-migration/) | Migrate a Lovable/Supabase app once, into an independent frontend (Next.js, React or Vue) and backend (Express or NestJS) |
 | [sync-lovable-app](sync-lovable-app/) | Bring new commits from the original Lovable app into the migrated repositories, again and again, without redoing the migration |
+| [lovable-migration](lovable-migration/) | Rebuild a frontend-only Lovable app (landing page, company site, portfolio, static dashboard) as a modular React, Next.js, Vue or Angular project that looks and behaves the same |
 
 ## What is a skill?
 
@@ -13,7 +16,16 @@ A skill is a folder of instructions that an AI agent loads when a task matches i
 
 You do not run a skill yourself. You ask the agent in plain language ("migrate this Lovable app", "sync the new Lovable changes"), and the agent follows the skill.
 
-## How the two skills fit together
+## Which skill do I need?
+
+| Your Lovable app… | Use |
+| --- | --- |
+| has no backend: no Supabase, no login, no database (forms posting to Formspree and similar are fine) | **lovable-migration** |
+| uses Supabase, Lovable Cloud, auth, Edge Functions or other backend features | **lovable-supabase-migration**, then **sync-lovable-app** for later changes |
+
+Not sure? Ask for lovable-migration. Its first step classifies the project and stops with an explanation if it finds a backend.
+
+## How the backend skills fit together
 
 ```text
  Lovable app (Supabase)
@@ -36,8 +48,9 @@ You do not run a skill yourself. You ask the agent in plain language ("migrate t
 
 - An AI coding agent that supports Agent Skills: Claude Code, Cursor, or Codex and other compatible hosts.
 - Git.
-- Python 3.8+ for the `sync-lovable-app` helper scripts (standard library only).
-- For migration verification: Node.js and Docker, plus `psql` if you want to use the schema-diff script.
+- Python 3.8+ for the `sync-lovable-app` and `lovable-migration` helper scripts (standard library only).
+- Node.js. For `lovable-migration`, network access to install Playwright's Chromium for the visual parity check.
+- For full-stack migration verification: Docker, plus `psql` if you want to use the schema-diff script.
 
 ## Install
 
@@ -51,9 +64,10 @@ cd skills
 mkdir -p ~/.claude/skills
 ln -s "$PWD/lovable-supabase-migration" ~/.claude/skills/lovable-supabase-migration
 ln -s "$PWD/sync-lovable-app" ~/.claude/skills/sync-lovable-app
+ln -s "$PWD/lovable-migration" ~/.claude/skills/lovable-migration
 ```
 
-With a symlink, `git pull` here updates the installed skills. Copy the folders instead if you want a fixed version. Keep each folder whole, with `SKILL.md`, `references/` and `scripts/` together.
+With a symlink, `git pull` here updates the installed skills. Copy the folders instead if you want a fixed version. Keep each folder whole, with `SKILL.md`, `references/`, `scripts/` and `assets/` together.
 
 | Host | Project location | Personal location |
 | --- | --- | --- |
@@ -65,9 +79,15 @@ The personal location is usually best: the skills work across several repositori
 
 ## Usage
 
-Open your agent in the folder that holds your Lovable app (or its parent folder) and ask in plain language. In Claude Code you can also type `/lovable-supabase-migration` or `/sync-lovable-app <mode>`.
+Open your agent in the folder that holds your Lovable app (or its parent folder) and ask in plain language. In Claude Code you can also type `/lovable-migration`, `/lovable-supabase-migration` or `/sync-lovable-app <mode>`.
 
-**Migrate (once)**
+**Rebuild a frontend-only site**
+
+> Use lovable-migration to analyze this Lovable project, ask me which framework and styling I want, and rebuild it as a modular project that looks the same.
+
+The agent captures screenshots of the original first. It asks for the framework (React, Next.js, Vue or Angular), language, styling and UI library, package manager and output folder, then builds the new project in a separate folder. Finally, it compares every route at mobile, tablet and desktop sizes against the original, and writes `MIGRATION_REPORT.md`.
+
+**Migrate a full-stack app (once)**
 
 > Use lovable-supabase-migration to analyze this project, ask me for the target stack, and migrate it into separate modular repositories.
 
@@ -91,11 +111,11 @@ After that, use:
 
 ## Safety by design
 
-- **Your code stays yours.** Neither skill resets, cleans, stashes or overwrites existing work. Sync work happens on separate branches, or in worktrees when you have uncommitted changes.
+- **Your code stays yours.** No skill resets, cleans, stashes or overwrites existing work. The original Lovable project is never modified by a migration. Sync work happens on separate branches, or in worktrees when you have uncommitted changes.
 - **The Lovable repository is read-only** for synchronization.
 - **Nothing is pushed, merged, deployed or run against production** unless you ask.
 - **Secrets stay secret.** Only environment variable *names* are recorded, `.env` files are never read, and credentials are stripped from remote URLs.
-- **Honest status.** Checks that were not run are reported as not run, never as passed. The sync checkpoint only moves over changes that are implemented and validated.
+- **Honest status.** Checks that were not run are reported as not run, never as passed. The sync checkpoint only moves over changes that are implemented and validated. A frontend rebuild is only "complete" when its screenshots match the original, or each difference was approved by you.
 - **You decide the important things:** the stack, repository names, baselines, conflicts between Lovable and your own improvements, and anything high-impact.
 
 ## Repository layout
@@ -110,13 +130,20 @@ skills/
 │   ├── assets/icon.svg
 │   ├── references/                  discovery, architecture, backend, frontend, data/security, …
 │   └── scripts/                     schema catalog diff, auth hash formats, empty-folder finder
-└── sync-lovable-app/
-    ├── SKILL.md                     modes, setup, A–F sync workflow
+├── sync-lovable-app/
+│   ├── SKILL.md                     modes, setup, A–F sync workflow
+│   ├── README.md
+│   ├── agents/openai.yaml
+│   ├── assets/icon.svg
+│   ├── references/                  sync state, commit analysis, mapping, conflicts, validation
+│   └── scripts/                     discover repositories, analyze commits, sync state, report
+└── lovable-migration/
+    ├── SKILL.md                     scope gate, six phases, safety rules
     ├── README.md
     ├── agents/openai.yaml
-    ├── assets/icon.svg
-    ├── references/                  sync state, commit analysis, mapping, conflicts, validation
-    └── scripts/                     discover repositories, analyze commits, sync state, report
+    ├── assets/                      icon, visual-parity Playwright kit, report template
+    ├── references/                  analysis, React/Next.js/Vue/Angular, styling, components, validation
+    └── scripts/                     project analyzer, report generator
 ```
 
 ## Adding or changing a skill

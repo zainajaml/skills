@@ -13,15 +13,8 @@ src/
     projects/
       components/
       views/
-      hooks/          # React/Next only
-      composables/    # Vue only
+      hooks/          # React/Next; composables/ in Vue
       api/projects.api.ts
-      types/
-      schemas/
-      state/
-      constants/
-      utils/
-      tests/
       index.ts
   shared/
     ui/
@@ -34,6 +27,8 @@ src/
   assets/
 public/
 ```
+
+This is the minimal feature shape. Add `types/`, `schemas/`, `state/`, `constants/`, `utils/` or `tests/` inside a feature only when it has content for them.
 
 Keep shared UI primitives separate from feature components. Shared code must not import feature internals. Split oversized components by behavior and responsibility, preserving keyboard interaction, focus, loading/empty/error states and visual behavior. Preserve useful existing UI libraries and styling; migration does not authorize redesigning the product. Use existing naming consistently and format/lint changed code.
 
@@ -51,7 +46,7 @@ Choose a documented client runtime, ordinarily Vite with a suitable router unles
 
 Use `src/app/` for bootstrap/providers/router composition and `src/routes/` for route files when the chosen router supports them. Route components delegate to feature views. Preserve protected routes and authorization-aware navigation without treating client-side guards as security enforcement. Ensure deep links work through hosting rewrites.
 
-If the source is TanStack Start, inventory SSR/server functions (`createServerFn` in `*.functions.ts`, server-only `*.server.ts`), middleware and server endpoints. Lovable's `@lovable.dev/vite-tanstack-config` builds for Cloudflare Workers by default; account for that runtime when moving server code: Workers support only a subset of Node.js APIs, depending on the `nodejs_compat` compatibility flag and compatibility date in the Wrangler configuration, plus Workers-specific bindings (KV, D1, R2, environment bindings). Check which APIs and bindings the existing server code uses and whether the target Node backend has equivalents to the backend and when choosing target hosting. Selecting a browser-only React target requires moving those responsibilities and adapting data loading/hydration. Do not remove the Lovable Vite wrapper, Nitro or route plugin before the replacement build and all dependent features work.
+If the source is TanStack Start, inventory SSR/server functions (`createServerFn` in `*.functions.ts`, server-only `*.server.ts`), middleware and server endpoints. Lovable's `@lovable.dev/vite-tanstack-config` builds for Cloudflare Workers by default; account for that runtime when moving server code: Workers support only a subset of Node.js APIs, depending on the `nodejs_compat` compatibility flag and compatibility date in the Wrangler configuration, plus Workers-specific bindings (KV, D1, R2, environment bindings). Check which APIs and bindings the existing server code uses, confirm the target Node backend has an equivalent for each one before moving that code, and take them into account when choosing target hosting. Selecting a browser-only React target requires moving those responsibilities and adapting data loading/hydration. Do not remove the Lovable Vite wrapper, Nitro or route plugin before the replacement build and all dependent features work.
 
 ## Vue.js
 

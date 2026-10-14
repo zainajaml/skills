@@ -26,15 +26,9 @@ Use a composition root to mount feature routers and inject dependencies. Keep ap
         projects.controller.ts
         projects.service.ts
         projects.repository.ts
-        projects.schemas.ts
-        projects.dto.ts
-        projects.types.ts
+        projects.schemas.ts     # validation, DTO shapes and OpenAPI source
         projects.policy.ts
-        projects.openapi.ts
-        projects.constants.ts
-        projects.entity.ts
-        utils/
-        tests/
+        projects.test.ts
       auth/
       users/
     integrations/
@@ -51,6 +45,14 @@ Use a composition root to mount feature routers and inject dependencies. Keep ap
   docker-compose.prod.yml
   README.md
 ```
+
+This is the minimal feature shape. Add a file only when the feature needs it:
+
+- `projects.dto.ts` when response mapping is non-trivial and not covered by the schemas;
+- `projects.entity.ts` when the ORM uses per-feature entities;
+- `projects.openapi.ts` when the OpenAPI generator needs separate registration;
+- `projects.types.ts` or `projects.constants.ts` once several files share them;
+- `utils/` or `tests/` folders once a feature has several helpers or test files.
 
 Register middleware in an intentional order, including raw-body routes needed for webhook signature verification before generic JSON parsing. Configure payload limits, allowlisted CORS, secure headers, trusted proxy settings appropriate to hosting, authentication, validation, rate limits, route mounting, 404 handling and a final error handler. Verify async error propagation for the selected Express major version; do not copy incompatible patterns.
 
@@ -85,10 +87,7 @@ Use Nest modules, dependency injection, controller decorators, pipes, guards, fi
         projects.policy.ts
         dto/create-project.dto.ts
         dto/project-response.dto.ts
-        entities/project.entity.ts
-        types/
-        constants/
-        tests/
+        projects.spec.ts
       auth/
       users/
     integrations/
@@ -106,7 +105,7 @@ Use Nest modules, dependency injection, controller decorators, pipes, guards, fi
   README.md
 ```
 
-Choose an ORM-compatible model layout: TypeORM entities can live in the feature; a tool requiring a central schema can keep that schema in database/ with ownership documented per module. Never create fake entities to satisfy this tree. Use DTO validation at the boundary and serialization that excludes sensitive fields. Configure transform/coercion and unknown-field behavior deliberately. Define guards for auth/roles and invoke resource policies for actual ownership checks. Avoid circular module dependencies and routine forwardRef use; redesign boundaries first.
+This is the minimal feature shape. Add `entities/`, `types/`, `constants/` or a `tests/` folder only when the feature has content for them. Choose an ORM-compatible model layout: TypeORM entities can live in the feature; a tool requiring a central schema can keep that schema in database/ with ownership documented per module. Never create fake entities to satisfy this tree. Use DTO validation at the boundary and serialization that excludes sensitive fields. Configure transform/coercion and unknown-field behavior deliberately. Define guards for auth/roles and invoke resource policies for actual ownership checks. Avoid circular module dependencies and routine forwardRef use; redesign boundaries first.
 
 ## API behavior
 

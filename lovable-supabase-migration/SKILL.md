@@ -18,9 +18,7 @@ Rebuild the application around its actual domains and behavior. Preserve working
 
 ## Portable execution
 
-Use ordinary repository reads, edits, searches, shell commands, and questions available in the host agent. Do not require proprietary commands, plugins, MCP servers, agent delegation, or tool-specific frontmatter. Resolve reference links relative to this SKILL.md, not the application working directory. If a tool or external system is unavailable, continue with supported work and report the exact unverified dependency. Never claim a command, live audit, import, or deployment was performed when it was not.
-
-Install this complete folder as `lovable-supabase-migration/` in the host's skills directory and keep `references/` beside SKILL.md. Common locations: `.claude/skills/` (Claude Code; Cursor also reads it), `.cursor/skills/` (Cursor), `.agents/skills/` or `.codex/skills/` (Codex and other Agent Skills hosts), or the personal `~/` equivalents. One copy in `.claude/skills/` covers Claude Code, Cursor and Codex. The core files are host-neutral; `agents/openai.yaml` is optional Codex/ChatGPT metadata that other hosts ignore. Start with: “Use lovable-supabase-migration to analyze this project, ask me for the target stack, and migrate it into separate modular repositories.”
+Use ordinary repository reads, edits, searches, shell commands, and questions available in the host agent. Do not require proprietary commands, plugins, MCP servers, agent delegation, or tool-specific frontmatter. Resolve reference and script links relative to this SKILL.md, not the application working directory. The read-only helpers in `scripts/` (schema catalog diff, auth hash format count, empty-folder finder) are referenced from the phase that uses them. If a tool or external system is unavailable, continue with supported work and report the exact unverified dependency. Never claim a command, live audit, import, or deployment was performed when it was not.
 
 ## Adapt to the project
 
@@ -29,7 +27,7 @@ This skill is generic. It must work for any Lovable or Supabase application: any
 - Classify the project first (the project profile in discovery.md) and drive every later decision from that profile, not from the examples in this skill.
 - Apply a section only when the project uses that capability. When it does not (no auth, no storage, no realtime, no Edge Functions, no email, no AI, single user, no tenants), record it as NOT APPLICABLE with the evidence and move on. Never build infrastructure for an unused capability.
 - Names in this skill (`projects`, `invitations`, tickets, `handle_new_user`, buckets, roles) are illustrations only. Use the project's own domains, tables, roles and terms.
-- Scale the process to the app. A small app still passes every gate, but its plan, ledger and reports can be short; a large app migrates in feature batches with resumable evidence.
+- Scale the process to the app. A small app passes every gate with lighter paperwork (see [Small projects](#small-projects)); a large app migrates in feature batches with resumable evidence.
 - The listed stacks (Next.js, React, Vue; Express, NestJS) are the supported branches. If the user explicitly asks for a different one (for example Fastify, Hono, Nuxt, SvelteKit or Angular), apply the same architecture, security and verification rules, say that it is outside the documented branches, and confirm the framework conventions from its official docs.
 - When evidence contradicts this skill (a newer Lovable template, a different Supabase feature, an unusual layout), follow the evidence, record the difference, and ask the user if it changes scope.
 
@@ -49,29 +47,27 @@ All work stays inside exactly two target projects: `<frontend-repo>` and `<backe
 
 ## Non-negotiable outcomes
 
-- Analyze before choosing architecture; ask for the missing frontend and backend selection before scaffolding. Never silently default to any stack (for example Express/TypeORM/React) because it is common.
-- Create independent frontend and backend repositories with their own manifests, lockfiles, configuration, tests, CI, and deployment boundaries. Two folders in one repository do not satisfy this requirement.
-- Organize both applications by business feature. Keep transport, validation, business rules, persistence, and presentation distinct. No generic everything-service or global table-query API as the final architecture.
-- Keep controllers and route/page files thin. Put queries in repositories/data access and rules in services/use cases. Do not wrap existing `supabase.from()` chains in differently named files and call the migration complete.
-- Keep backend business logic, privileged integrations, jobs, and persistence out of the frontend repository. Next.js/SSR rendering and thin session/API adapters may remain there; duplicate business logic may not.
-- Preserve required functionality. Remove a used capability only when the user explicitly changes scope. Missing credentials mean blocked verification, not “not used.”
-- Treat schema creation, existing-row migration, authentication identity migration, and storage-object migration as four separate workstreams.
-- Use one authoritative schema/migration history. Never run competing Supabase, Drizzle, and target ORM migration paths against the target database.
-- Write migrations as small, ordered files: roughly one table per file, with enums/extensions, functions, triggers, views and policies in their own focused files. Never produce one large dump-style migration. Every source table, constraint, index, sequence, enum, view, function, trigger, extension, cron job and policy must map to a target migration file or a recorded decision (moved to backend code, or retired with a reason).
-- Before handover, start the migrated backend (and frontend) against an isolated test database built from the migrations, and prove every documented API operation works with automated tests, including denied or error cases (a documented NOT APPLICABLE only for operations with no meaningful failure case). Never run this against production data.
-- Preserve authorization previously enforced by RLS through explicit tested backend policies, or deliberately configured target database RLS with verified request context and connection-pool isolation. Tenant/ownership checks apply to every read/write, upload/download, job, integration, and realtime channel.
-- Document and test OpenAPI throughout implementation. A Swagger UI shell alone is insufficient.
-- Use one standard API payload format, applied centrally: backend response/error interceptors (or middleware) wrap every application JSON response, except documented protocol responses that must keep their own format (OAuth, MCP, third-party webhooks, health checks, files, streams, SSE, 204), and the frontend API client uses request/response interceptors. Controllers and components never hand-build envelopes or parse raw responses.
-- Handle errors deliberately: typed domain errors, try/catch only where it adds value (translate, clean up, compensate, retry), one central error handler, and bounded retries with backoff only for transient failures of safe or idempotent operations. Never swallow errors or retry forever.
-- No circular dependencies between modules, files or Nest providers in either repository; check with a tool in CI.
-- Proper structured backend logging from the start: one JSON logger, levels via `LOG_LEVEL`, one request log line with request ID, route, status and duration, central redaction of secrets/tokens/personal data, no `console.log` in application code (see backend.md).
-- Docker must spin up the APIs, not just the database: one `docker compose -f docker-compose.dev.yml up --build` in `<backend-repo>` starts the database, runs migrations, and starts the API (plus worker/mail only if used) with healthchecks; production uses a multi-stage, non-root image. Verify it actually starts (see deployment.md).
-- When the app sends email, every template (auth and product emails) uses one shared email layout built from the frontend's real design tokens — logo, app name, brand colors converted to hex, font and button style — in email-safe HTML with a plain-text version, previewed in Mailpit (see data-security.md).
-- Each repository has a root `README.md` that explains how to spin everything up — prerequisites, env setup, Docker and non-Docker start, service URLs and ports, scripts, database, tests, logs, API docs, production and troubleshooting — and every command in it has been run successfully.
-- No browser database credentials, service-role keys, known deployed secret defaults, or tokens in redirect URLs. Never print secret values during audits.
-- Leave no unused code in the target repositories: no empty or placeholder folders, unused files, components, exports, dependencies, scripts, environment variables, scaffold demo code, or leftover Supabase/Lovable folders. Run the unused-code pass in implementation.md before handover and list every removal in the final report. Archive historical evidence under `docs/migration/history/` instead of leaving it in active code.
-- Keep changes reversible; preserve original code/history and migration evidence. Do not overwrite sibling directories or delete duplicate repositories on assumption.
-- Do not claim complete/production-ready when data, permissions, platform dependencies, or required runtime verification remain unresolved.
+Each rule is detailed in the linked reference; the reference wins on specifics.
+
+- **Ask before choosing the stack.** Analyze first, then ask for the frontend and backend; never silently default to a common stack.
+- **Two independent repositories,** each with its own manifest, lockfile, config, tests, CI and deployment. Two folders in one repository do not count ([architecture.md](references/architecture.md)).
+- **Feature-based modules with thin controllers/routes.** Queries in repositories, rules in services/use cases, no generic everything-service or table-query API, and no renamed `supabase.from()` chains ([backend.md](references/backend.md), [frontend.md](references/frontend.md)).
+- **No business logic in the frontend repo.** SSR rendering and thin session/API adapters only.
+- **Preserve required functionality.** Drop a used capability only on an explicit scope change; missing credentials mean BLOCKED, not "not used".
+- **Four separate data workstreams:** schema, existing rows, auth identities, storage objects ([data-security.md](references/data-security.md)).
+- **One migration history of small ordered files** (about one table per file) with every source database object mapped in `schema-coverage.md` ([data-security.md](references/data-security.md)).
+- **Authorization parity:** every RLS rule becomes a tested backend policy (or deliberately retained RLS), including files, jobs and realtime.
+- **Every API operation tested** on an isolated test database with a success and a denied/error case; never against production data ([verification.md](references/verification.md)).
+- **OpenAPI documented and tested as you go;** a Swagger UI shell alone is insufficient.
+- **One payload envelope and deliberate error handling,** applied by central interceptors/middleware; typed domain errors, bounded retries for transient failures only ([backend.md](references/backend.md)).
+- **No circular dependencies,** checked by a tool in CI.
+- **Structured JSON logging from the start** with request IDs and central redaction; no `console.log` in application code.
+- **One Docker command starts DB, migrations and API;** production image is multi-stage and non-root ([deployment.md](references/deployment.md)).
+- **Emails (if any) share one layout built from the frontend's design tokens** ([data-security.md](references/data-security.md#email-templates-follow-the-apps-design)).
+- **A root README per repository** whose every command was run ([deployment.md](references/deployment.md#root-readme-in-each-repository)).
+- **No secrets in the browser, logs, URLs or reports;** no known deployed secret defaults.
+- **No unused code or empty folders** at handover; every removal listed in the report ([implementation.md](references/implementation.md#unused-code-and-empty-folder-pass)).
+- **Reversible and honest.** Preserve source history and evidence, never overwrite sibling directories, and never claim complete or production-ready while data, permissions, platform dependencies or runtime verification are unresolved.
 
 ## Load references at the relevant phase
 
@@ -149,6 +145,18 @@ Follow the runtime acceptance procedure in verification.md: create a fresh isola
 
 Write `docs/migration/report.md` from the template in verification.md and give the user a summary in the response: the overview, gate results table, coverage numbers, removed items, remaining risks and exact next actions. Every PASS must link to evidence; anything unverified is shown as BLOCKED or NOT RUN, never omitted.
 
+## Small projects
+
+A project is small when it has roughly ten tables or fewer, a handful of screens, one auth method, no multi-tenant model and no other clients. It still passes every gate; only the paperwork and structure shrink:
+
+- Combine discovery, architecture, plan and ledger into one `docs/migration/plan.md`; schema coverage and cutover can be sections in it. Keep `verification.md` and `report.md` separate.
+- Present the 12 architecture decisions as one line each; mark the ones that do not apply NOT APPLICABLE in a single list.
+- Use the minimal module trees in backend.md and frontend.md without the optional files.
+- Write API acceptance tests as table-driven cases: one table of operations with their success and denied/error inputs, rather than a test file per endpoint. Every operation still needs both cases.
+- Omit report sections and README sections that do not apply, with a one-line reason.
+
+Never shrink authorization tests, data/identity reconciliation, secret handling or the runtime API acceptance run.
+
 ## Keep resumable evidence
 
 Maintain `docs/migration/` in the backend repository once implementation starts, with a short pointer from frontend documentation. During analysis-only work, present the same artifacts in the response unless files were requested.
@@ -162,6 +170,6 @@ Maintain `docs/migration/` in the backend repository once implementation starts,
 - `cutover.md`: operational sequence, backups, thresholds and rollback.
 - `report.md`: final audit and overview report (template in verification.md), also summarized in the final response.
 
-Ledger row shapes and the final report template are in [verification.md](references/verification.md) and [discovery.md](references/discovery.md).
+The ledger row shape is in [discovery.md](references/discovery.md#deliver-evidence) and the final report template in [verification.md](references/verification.md#final-audit-and-overview-report).
 
 On resume, read these artifacts and current changes, verify completed evidence is still applicable, and continue at the earliest unmet gate. Do not restart discovery or repeat resolved questions unnecessarily.

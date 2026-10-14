@@ -1,0 +1,9 @@
+interface:
+  display_name: Sync Lovable App
+  short_description: Bring new Lovable commits into migrated frontend and backend repos
+  default_prompt: Use $sync-lovable-app to show the sync status, analyze the new Lovable
+    commits since the last checkpoint, and sync them into the migrated frontend and backend.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  allow_implicit_invocation: true

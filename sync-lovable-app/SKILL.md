@@ -44,7 +44,7 @@ Take the mode from the user's request. If none is given, run **status** and sugg
 
 | Mode | Does | Writes |
 | --- | --- | --- |
-| setup | First run: discover repositories, confirm roles, branches and baseline, run `init` | sync state only |
+| setup | First run: the user picks the Lovable app, frontend, backend, branches and last synced commit; run `init` ([Setup](#setup)) | sync state only |
 | status | `sync_state.py status`: checkpoint, upstream tip, pending commits, repository states, active session, problems | nothing |
 | analyze | Phases A–C below; present the plan | nothing |
 | preview | Analyze plus the exact destination files, endpoints, migrations and tests per unit | nothing |
@@ -55,11 +55,49 @@ Take the mode from the user's request. If none is given, run **status** and sugg
 
 In Claude Code, the user can type `/sync-lovable-app <mode>`. In Cursor and other hosts, they ask the agent in words, for example "use sync-lovable-app to show the sync status". Command syntax differs between hosts, so do not assume it.
 
+## Setup
+
+Run setup when no `.lovable-sync/sync-state.json` exists, or when the user asks to set up again. The user chooses every repository and the baseline. Discovery only offers options; never pick a role from folder names or hints.
+
+1. **Workspace.** Use the folder the user names. Otherwise propose the parent of the current repository and ask them to confirm it or give another path.
+2. **List the repositories.** Run `discover_repositories.py <workspace>` and show a numbered list. Give each repository its folder, current branch, frameworks and role hint, and say whether it has uncommitted changes. For example:
+
+   ```text
+   Git repositories in ~/www/spaceman:
+     1. lovable-original      main   react, vite, Supabase client, lovable-tagger   (hint: Lovable source)
+     2. old-lovable-copy      main   react, vite, Supabase client                   (hint: Lovable source)
+     3. spacescope-frontend   main   next, react                                    (hint: frontend)
+     4. spacescope-backend    main   express, docs/migration                        (hint: backend)
+     5. marketing-site        main   astro
+   ```
+
+3. **Ask the user to choose, in one message:**
+   - which number (or path) is the **Lovable parent app** (the upstream source), and which **branch** to sync from;
+   - which number (or path) is the **migrated frontend**, and its **target branch**;
+   - which number (or path) is the **migrated backend**, and its **target branch**.
+
+   Accept answers in any form ("1 main, 3 main, 4 develop", or paths). If the user already named the repositories or branches in their request, only ask for what is missing. If several repositories could be the Lovable app (copies, forks, `sharedHistory` in the output), point that out and let the user decide. Each role needs a different repository, except a frontend that reuses the Lovable repository on another branch.
+4. **Ask for the last synced commit hash:** the newest Lovable commit that the migrated apps already contain. Synchronization starts after it. Help the user find it:
+   - show `git -C <lovable-app> log --date=short --format="%h %ad %s" -n 20 <branch>`;
+   - suggest evidence if it exists (the date or commit in `<backend>/docs/migration/report.md`, or the date of the migration's first commit), but let the user decide;
+   - accept a full or short hash, then show the resolved commit (hash, date, subject) and ask the user to confirm it;
+   - if the user does not know, say that every commit after the one they pick will be analyzed, so an older commit is safer than a newer one. Never assume a baseline.
+5. **Ask whether `git fetch` is allowed** in the Lovable repository, for checking for newer upstream commits.
+6. **Show a summary** (workspace, the three repositories with their branches, the baseline commit, fetch permission). After the user confirms, run:
+
+   ```bash
+   python3 <skill>/scripts/sync_state.py init --workspace <ws> --source <lovable> --source-branch <b> \
+     --frontend <fe> --frontend-branch <b> --backend <be> --backend-branch <b> \
+     --baseline <hash> --reason "<how the user confirmed it>" [--allow-fetch]
+   ```
+
+   `init` rejects a hash that does not exist or is not on the chosen branch. Show its error and ask again. Afterwards, report the number of commits pending since the baseline (`sync_state.py status`).
+
 ## Workflow
 
 ### A. Preflight
 
-1. Find `.lovable-sync/sync-state.json` (`sync_state.py status` searches upward from the current folder). If there is none, do **setup**: run `discover_repositories.py` on the workspace, show what it found, and ask the user to confirm the workspace, the Lovable source, the frontend, the backend, the source branch and the target branches. Folder names are not evidence. Then ask for the **baseline**: the last upstream commit the migrated apps already contain. Suggest evidence (the migration report's date or commit, `docs/migration/`), but never assume it. With an unknown baseline, earlier commits are *not* treated as migrated. Ask whether `git fetch` is allowed in the source. Then run `sync_state.py init`.
+1. Find `.lovable-sync/sync-state.json` (`sync_state.py status` searches upward from the current folder). If there is none, run [Setup](#setup) first.
 2. Run `sync_state.py verify`. Stop on errors (rewritten upstream history, a different repository at a path, an unfinished merge or rebase, contradictory sync references). For rewritten history, follow [sync-state.md](references/sync-state.md#rewritten-upstream-history). Report warnings (uncommitted changes, unmerged sync branches, shallow clones) and handle them as described there.
 3. If a session is active, switch to **resume** unless the user wants to `close` it.
 4. Resolve the target explicitly (the configured branch or a commit the user names; never just `HEAD`).

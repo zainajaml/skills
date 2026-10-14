@@ -20,7 +20,7 @@ The personal location is usually the right one, because the skill works across t
 
 | Ask | What happens |
 | --- | --- |
-| "Use sync-lovable-app to set up syncing" | Finds the repositories, asks you to confirm roles, branches and the baseline commit, and creates `.lovable-sync/` in the workspace |
+| "Use sync-lovable-app to set up syncing" | Lists the Git repositories in your workspace, lets you pick the Lovable app, frontend and backend (with branches) and the last synced Lovable commit, then creates `.lovable-sync/` in the workspace |
 | "…show the sync status" | Checkpoint, upstream tip, pending commits, repository states, open problems |
 | "…analyze the new Lovable commits" / "…preview the sync" | Plan only: work units, intent, destination mapping, conflicts, tests. Nothing is written |
 | "…sync the new Lovable changes" | Implements the plan on `lovable-sync/<session>` branches, validates, advances the checkpoint, writes a report |
